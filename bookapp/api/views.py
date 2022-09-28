@@ -8,8 +8,8 @@ from rest_framework.permissions import IsAuthenticated
 from django_filters.rest_framework import DjangoFilterBackend
 
 
-from bookapp.models import Book, Author, Review, Category
-from .serializers import BookSerializer, AuthorSerializer, CategorySerializer, ReviewSerializer
+from bookapp.models import *
+from .serializers import *
 from .permissions import AdminOrAuthenticatedUser, ReviewUserOnly, AdminOrReadOnly
 from .paginators import WatchListPagination
 
@@ -25,7 +25,7 @@ class BookListView(generics.ListCreateAPIView):
                         "author__first_name", 
                         "author__last_name", 
                         "author__middle_name", 
-                        "_name", 
+                        "category__name", 
                         "published_countries__name"
                        ]
     search_fields = [
@@ -33,7 +33,7 @@ class BookListView(generics.ListCreateAPIView):
                         "author__first_name", 
                         "author__last_name", 
                         "author__middle_name", 
-                        "_name", 
+                        "category__name", 
                         "published_countries__name",
                         "published_countries__code"
                     ]
@@ -147,7 +147,7 @@ class UserReviews(generics.ListAPIView):
         username = self.kwargs["username"]
         queryset = Review.objects.filter(review_user__username=username)
         return queryset 
-    
+        
 class CategoryView(viewsets.ViewSet):
     permission_classes = [AdminOrReadOnly] 
     lookup_field = 'name'

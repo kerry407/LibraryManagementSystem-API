@@ -5,16 +5,36 @@ from .models import Book, Author, Category, Country, Review
 from django.urls import reverse 
 from django.contrib.auth.models import User
 from rest_framework_simplejwt.tokens import RefreshToken
+
 # Create your tests here.
 
-class AuthorTestCase(APITestCase):
+class ModelSetup:
     
-    def setUp(self):
+    def common_model_setup(self):
+        self.category1 = Category.objects.create(name="Folklore")
+        self.category2 = Category.objects.create(name="History")
         self.author = Author.objects.create(first_name="Kerry", last_name="Onyeogo", middle_name="Nwaka")
+        self.author2 = Author.objects.create(first_name="Preston", last_name="Clement", middle_name="Chizi")
+        self.country1 = Country.objects.create(name="Germany", code="DE")
+        self.country2 = Country.objects.create(name="United Kingdom", code="UK")
         self.user = User.objects.create_user(username="exampleuser", email="example@gmail.com", password="Akpororo1")
+        self.book = Book.objects.create(
+                                        title="No longer at ease", 
+                                        author=self.author, 
+                                        is_bestselling=False, 
+                                        description="No longer at ease by Preston"
+                                        )
+        self.book.published_countries.add(self.country1)
+        self.book.published_countries.add(self.country2)
+        self.book.save()
         refresh = RefreshToken.for_user(self.user)
         access_token = refresh.access_token
         self.client.credentials(HTTP_AUTHORIZATION= f"Bearer {access_token}")
+        
+class AuthorTestCase(ModelSetup, APITestCase):
+    
+    def setUp(self):
+        return super().common_model_setup()
         
     def test_author_list(self):
         response = self.client.get(reverse("author-list"))
@@ -47,14 +67,10 @@ class AuthorTestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
         
 
-class CategoryTestCase(APITestCase):
+class CategoryTestCase(ModelSetup, APITestCase):
     
     def setUp(self):
-        self.category = Category.objects.create(name="Folklore")
-        self.user = User.objects.create_user(username="exampleuser", email="example@gmail.com", password="Akpororo1")
-        refresh = RefreshToken.for_user(self.user)
-        access_token = refresh.access_token
-        self.client.credentials(HTTP_AUTHORIZATION= f"Bearer {access_token}")
+        return super().common_model_setup()
         
     def test_create_category(self):
         data = {
@@ -68,43 +84,24 @@ class CategoryTestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         
     def test_get_individual_category(self):
-        response = self.client.get(reverse("category-detail", args=[self.category.name]))
+        response = self.client.get(reverse("category-detail", args=[self.category1.name]))
         self.assertEqual(response.status_code, status.HTTP_200_OK)  
         
     def test_update_individual_category(self):
         data = {
             "name": "History"
         }
-        response = self.client.put(reverse("category-detail", args=[self.category.name]), data)
+        response = self.client.put(reverse("category-detail", args=[self.category1.name]), data)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
         
     def test_delete_individual_category(self):
-        response = self.client.delete(reverse("category-detail", args=[self.category.name]))
+        response = self.client.delete(reverse("category-detail", args=[self.category2.name]))
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
         
-        
-class BookTestCase(APITestCase):
+class BookTestCase(ModelSetup, APITestCase):
 
     def setUp(self):
-        self.category1 = Category.objects.create(name="Folklore")
-        self.category2 = Category.objects.create(name="History")
-        self.author = Author.objects.create(first_name="Kerry", last_name="Onyeogo", middle_name="Nwaka")
-        self.author2 = Author.objects.create(first_name="Preston", last_name="Clement", middle_name="Chizi")
-        self.country1 = Country.objects.create(name="Germany", code="DE")
-        self.country2 = Country.objects.create(name="United Kingdom", code="UK")
-        self.user = User.objects.create_user(username="exampleuser", email="example@gmail.com", password="Akpororo1")
-        self.book = Book.objects.create(
-                                        title="No longer at ease", 
-                                        author=self.author, 
-                                        is_bestselling=False, 
-                                        description="No longer at ease by Preston"
-                                        )
-        self.book.published_countries.add(self.country1)
-        self.book.published_countries.add(self.country2)
-        self.book.save()
-        refresh = RefreshToken.for_user(self.user)
-        access_token = refresh.access_token
-        self.client.credentials(HTTP_AUTHORIZATION= f"Bearer {access_token}")
+        return super().common_model_setup()
         
     def test_book_create(self):
         data = {
@@ -145,29 +142,10 @@ class BookTestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
     
         
-class ReviewTestCase(APITestCase):
+class ReviewTestCase(ModelSetup, APITestCase):
     
     def setUp(self):
-        self.category1 = Category.objects.create(name="Folklore")
-        self.category2 = Category.objects.create(name="History")
-        self.author = Author.objects.create(first_name="Kerry", last_name="Onyeogo", middle_name="Nwaka")
-        self.author2 = Author.objects.create(first_name="Preston", last_name="Clement", middle_name="Chizi")
-        self.country1 = Country.objects.create(name="Germany", code="DE")
-        self.country2 = Country.objects.create(name="United Kingdom", code="UK")
-        self.user = User.objects.create_user(username="exampleuser", email="example@gmail.com", password="Akpororo1")
-        self.book = Book.objects.create(
-                                        title="No longer at ease", 
-                                        author=self.author, 
-                                        is_bestselling=False, 
-                                        description="No longer at ease by Preston"
-                                        )
-        self.book.published_countries.add(self.country1)
-        self.book.published_countries.add(self.country2)
-        self.book.save()
-        refresh = RefreshToken.for_user(self.user)
-        access_token = refresh.access_token
-        self.client.credentials(HTTP_AUTHORIZATION= f"Bearer {access_token}")
-        
+        return super().common_model_setup()
         
     def test_review_create(self):
         data = {
@@ -176,15 +154,12 @@ class ReviewTestCase(APITestCase):
         }
         response = self.client.post(reverse("review-create", args=[self.book.slug]), data)
         json_data = response.json()
-        print(json_data)
         review = Review.objects.get(book__title=json_data.get("book_title"))
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(review.book.no_reviews, 1)
         self.assertEqual(review.book.average_rating, 3.5)
-        
+        # Try to create another review, we should get a 400 bad request error
         response = self.client.post(reverse("review-create", args=[self.book.slug]), data)
-        json_data = response.json()
-        print(json_data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         
         
@@ -195,8 +170,6 @@ class ReviewTestCase(APITestCase):
             "body": "trash book",
         }
         response = self.client.post(reverse("review-create", args=[self.book.slug]), data)
-        json_data = response.json()
-        print(json_data)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         
     def test_reviews_by_book(self):

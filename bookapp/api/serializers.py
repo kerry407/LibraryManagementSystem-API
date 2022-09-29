@@ -9,13 +9,6 @@ class BookSerializer(serializers.ModelSerializer):
     class Meta:
         model = Book 
         exclude = ["id", "slug"]
-        
-        
-    def validate_published_countries(self, value):
-        country_list = value.split(",")
-        if len(country_list) > 6:
-            raise serializers.ValidationError("Maximum number of countries exceeded. Max is 6")
-        return value 
     
 class AuthorSerializer(serializers.ModelSerializer):
     middle_name = serializers.StringRelatedField(read_only=True)
